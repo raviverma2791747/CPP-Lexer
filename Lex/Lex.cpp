@@ -37,6 +37,8 @@ public:
 public:
     void Log();
     void Push_back(char ch);
+    void Push_back(std::string str);
+    std::string token();
     
 };
 
@@ -86,13 +88,34 @@ void Token::Push_back(char ch)
     m_token.push_back(ch);
 }
 
-
+void Token::Push_back(std::string str)
+{
+    for (int i = 0; i < str.size(); i++)
+    {
+        m_token.push_back(str[i]);
+    }
+}
+std::string Token::token()
+{
+    return m_token;
+}
 
 bool IsKeyword(std::string& buffer)
 {
     for (int i = 0; i < 61; i++)
     {
         if (buffer == Keywords[i] )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool IsKeyword(Token kwd)
+{
+    for (int i = 0; i < 61; i++)
+    {
+        if (kwd == Keywords[i])
         {
             return true;
         }
@@ -145,7 +168,11 @@ int main()
 {
     /*First Pass*/
     std::ifstream fin;
-    fin.open("test.txt", std::ios::in);
+    fin.open("kwd.txt", std::ios::in);
+    if (!fin)
+    {
+        std::cout << "No such file exists" << std::endl;
+    }
     std::vector<Token> source;
     std::string buffer;
     char ch;
@@ -155,6 +182,10 @@ int main()
     {
         flag = false;
         fin.get(ch);
+        if (ch == fin.eof())
+        {
+            break;
+        }
         if ( ch == '\n')
         {
             line += 1;
@@ -180,7 +211,11 @@ int main()
         while(!flag)
         {
             buffer.push_back(ch);
-            
+            if (ch == fin.eof())
+            {
+
+                break;
+            }
             if (ch == '\n')
             {
             line += 1;
@@ -215,7 +250,17 @@ int main()
         }
     }
     fin.close();
-
+    std::cout << "Pass 1 complete" << std::endl;
+     ch = 'n';
+    std::cout << "::";
+    std::cin >> ch;
+    if (ch == 'y')
+    {
+        for (int i = 0; i < source.size(); i++)
+        {
+            source[i].Log();
+        }
+    }
     /*Second Pass*/
     std::vector<Token> source2;
     for (int i = 0; i < source.size(); i++)
@@ -230,6 +275,248 @@ int main()
                     source2.push_back(source[i]);
                     i += 1;
                 }
+                else if (source[i+1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else 
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "*")
+            {
+                if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "/")
+            {
+                if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "%")
+            {
+                if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "!")
+            {
+                if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "&")
+            {
+                if (source[i + 1] == "&")
+                {
+                    source[i].Push_back('&');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "|")
+            {
+                if (source[i + 1] == "|")
+                {
+                    source[i].Push_back('|');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "^")
+            {
+            if (source[i + 1] == "=")
+            {
+                source[i].Push_back('=');
+                source2.push_back(source[i]);
+                i += 1;
+            }
+            else
+            {
+                source2.push_back(source[i]);
+            }
+            }
+            else if (source[i] == "<")
+            {
+                if (source[i + 1] == "<")
+                {
+                    if(source[i+2] == "=")
+                    {
+                        source[i].Push_back('<');
+                        source[i].Push_back('=');
+                        source2.push_back(source[i]);
+                        i += 2;
+                    }
+                    else
+                    {
+                        source[i].Push_back('<');
+                        source2.push_back(source[i]);
+                        i += 1;
+                    }
+                }
+                else if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == ">")
+            {
+                if (source[i + 1] == ">")
+                {
+                    if(source[i+2] == "=")
+                    {
+                        source[i].Push_back('>');
+                        source[i].Push_back('=');
+                        source2.push_back(source[i]);
+                        i += 2;
+                    }
+                    else
+                    {
+                        source[i].Push_back('>');
+                        source2.push_back(source[i]);
+                        i += 1;
+                    }
+                }
+                else if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "-")
+            {
+                if (source[i + 1] == "-")
+                {
+                    source[i].Push_back('-');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else if (source[i + 1] == ">")
+                {
+                    if (source[i + 2] == "*")
+                    {
+                        source[i].Push_back('>');
+                        source[i].Push_back('*');
+                        source2.push_back(source[i]);
+                        i += 2;
+                    }
+                    else
+                    {
+                        source[i].Push_back('>');
+                        source2.push_back(source[i]);
+                        i += 1;
+                    }
+                }
+               
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == "=")
+            {
+                if (source[i + 1] == "=")
+                {
+                    source[i].Push_back('=');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == ":")
+            {
+                if (source[i + 1] == ":")
+                {
+                    source[i].Push_back(':');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+            else if (source[i] == ".")
+            {
+                if (source[i + 1] == "*")
+                {
+                    source[i].Push_back('*');
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
                 else
                 {
                     source2.push_back(source[i]);
@@ -240,6 +527,33 @@ int main()
                 source2.push_back(source[i]);
             }
         }
+        else if (IsKeyword(source[i]))
+        {
+            
+           if (source[i] == "static")
+            {
+                if (source[i + 1] == "_cast")
+                {
+                    source[i].Push_back("_cast");            
+                    source2.push_back(source[i]);
+                    i += 1;
+                }
+                else
+                {
+                    source2.push_back(source[i]);
+                }
+            }
+           /*else if (!(IsKeyword(source[i + 1]) || IsOperator(source[i + 1])))
+           {
+               source[i].Push_back(source[i+1].token());
+               i += 1;
+           }
+           */
+           else
+           {
+                source2.push_back(source[i]);
+           }
+        }
         else
         {
             source2.push_back(source[i]);
@@ -247,7 +561,7 @@ int main()
     }
     for (int i = 0; i < source2.size(); i++)
     {
-        source[i].Log();
+        source2[i].Log();
     }
     return 0;
 }
