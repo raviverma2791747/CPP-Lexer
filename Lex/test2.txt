@@ -1,0 +1,197 @@
+
+#include <iostream>
+#include<fstream>
+#include<string>
+#include<vector>
+
+char operators[] = "#+-*/%&|!=><[](){},.;:'\"?^~\\";
+std::string Keywords[] = { "asm","auto","bool","break","case",
+"catch","char","class","const_cast","continue",
+"default","delete","do","double","dynamic_cast",
+"else","enum","explicit","extern","false","float",
+"for","friend","gotot","if","inline","int","long",
+"mutable","namespace","new","operator","private",
+"protected","public","register","reinterpret_cast",
+"return","short","signed","sizeof","static_cast","static",
+"struct","switch","template","this",
+"throw","true","try","typedef","typeid","typename",
+"union","unsigned","using","virtual","void",
+"volatile","wchar_t","while" };
+
+
+class Buffer
+{
+    char m_buffer[17];
+   // std::vector<char> m_bufferoveflow;
+    char m_size;
+public:
+    Buffer();
+    ~Buffer();
+public:
+    int size();
+    void clear();
+    std::string buffer();
+    char& operator[](int index);
+    bool operator==(std::string str);
+};
+
+Buffer::Buffer()
+{
+    m_size = 17;
+    for (int i = 0; i < m_size; i++)
+    {
+        m_buffer[i] = '\0';
+    }
+}
+
+Buffer::~Buffer()
+{
+
+}
+
+int Buffer::size()
+{
+    return m_size;
+}
+
+void Buffer::clear()
+{
+    for (int i = 0 ; i < m_size; i++)
+    {
+        m_buffer[i] = '\0';
+    }
+}
+
+std::string Buffer::buffer()
+{
+    std::string str(m_buffer,m_size);
+    return  str;
+}
+
+char& Buffer::operator[](int index)
+{
+    if (index > m_size || index < 0)
+    {
+        return m_buffer[0];
+    }
+    else
+    {
+        return m_buffer[index];
+    }
+}
+bool Buffer::operator==(std::string str)
+{
+    
+    if (str == m_buffer)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool IsKeyword(Buffer& buffer)
+{
+    for (int i = 0; i < 61; i++)
+    {
+        if (buffer == Keywords[i] )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+class Token
+{
+private:
+    std::string m_token;
+    std::string m_type;
+public:
+    Token(std::string token, std::string type);
+    Token(char token, std::string type);
+    ~Token();
+public:
+    void Log();
+};
+
+Token::Token(std::string token, std::string type):
+    m_token(token),m_type(type)
+{
+
+}
+
+Token::Token(char token, std::string type) :
+    m_token(1,token), m_type(type)
+{
+
+}
+
+Token::~Token()
+{
+
+}
+
+void Token::Log()
+{
+    std::cout << m_type << " : " << m_token << std::endl;
+}
+
+int main()
+{
+    std::ifstream fin;
+    fin.open("test.txt", std::ios::in);
+    std::vector<Token> source;
+    Buffer buffer;
+    char ch;
+    bool flag = false;
+    while (!fin.eof())
+    {
+        flag = false;
+        fin.get(ch);
+        if (ch == ' ' || ch =='\n')
+        {
+            continue;
+        }
+        for (int i = 0; i < 29; i++)
+        {
+            if (ch == operators[i])
+            {
+                source.push_back(Token(ch, "operator"));
+                flag = true;
+                break;
+            }
+        }
+        if (flag == true)
+        {
+            continue;
+        }
+        for (int i = 0;i < buffer.size(); i++)
+        {
+            buffer[i] = ch;
+            if (IsKeyword(buffer) == true)
+            {
+                source.push_back(Token(buffer.buffer(),"Keyword"));
+                buffer.clear();
+                flag = true;
+                break;
+            }
+            fin.get(ch);
+        }
+        if (flag == false)
+        {
+            source.push_back(Token(buffer.buffer(), "Identifier"));
+            buffer.clear();
+        }
+    }
+    fin.close();
+
+    for (int i = 0; i < source.size(); i++)
+    {
+        source[i].Log();
+    }
+    return 0;
+}
+
