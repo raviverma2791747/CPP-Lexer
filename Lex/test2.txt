@@ -39,6 +39,7 @@ public:
     void Push_back(char ch);
     void Push_back(std::string str);
     std::string token();
+    void Type(std::string type);
     
 };
 
@@ -93,7 +94,7 @@ void Token::Push_back(char ch)
 
 void Token::Push_back(std::string str)
 {
-    for (int i = 0; i < str.size(); i++)
+    for (unsigned int i = 0; i < str.size(); i++)
     {
         m_token.push_back(str[i]);
     }
@@ -101,6 +102,11 @@ void Token::Push_back(std::string str)
 std::string Token::token()
 {
     return m_token;
+}
+
+void Token::Type(std::string type)
+{
+    m_type = type;
 }
 
 bool IsKeyword(std::string& buffer)
@@ -152,14 +158,39 @@ bool IsOperator(Token ch)
     return false;
 }
 
-bool IsBufferNum(std::string& buffer)
+bool IsAlnum(std::string buffer)
 {
-    
-    for (int i = 0; i < buffer.size(); i++)
+    for(unsigned int i=0;i<buffer.size();i++)
     {
-        if (!isalnum(buffer[i]))
+        if (isalnum(buffer[i]) == false)
+        {     
+            if (buffer[i] == '.')
+            {
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool IsAlnum(Token tkn)
+{
+    for (unsigned int i = 0; i <tkn.token().size(); i++)
+    {
+        if (isalnum(tkn.token()[i]) == false)
         {
-            return false;
+            if (tkn.token()[i] == '.')
+            {
+
+            }
+            else
+            {
+                return false;
+            }
         }
     }
     return true;
@@ -171,7 +202,7 @@ int main()
 {
     /*First Pass*/
     std::ifstream fin;
-    fin.open("test.txt", std::ios::in);
+    fin.open("string.txt", std::ios::in);
     if (!fin)
     {
         std::cout << "No such file exists" << std::endl;
@@ -185,24 +216,150 @@ int main()
     {
         flag = false;
         fin.get(ch);
-        if (ch == fin.eof())
+        if (fin.eof())
         {
             break;
         }
-        if ( ch == '\n')
+        //track lines
+        else if (ch == '\n')
         {
             line += 1;
             continue;
         }
-        if (ch == ' ')
+        //remove spaces
+        else if (ch == ' ')
         {
             continue;
         }
-       if (ch == '\"')
+        //single character identification
+        else if (ch == '\'')
         {
             buffer.push_back(ch);
             fin.get(ch);
-            while(ch != '\"')
+            if (ch == '\'')
+            {
+                buffer.push_back(ch);
+                source.push_back(Token(buffer, "String", line));
+                buffer.clear();
+                continue;
+            }
+            else if (ch == '\\')
+            {
+                buffer.push_back(ch);
+                fin.get(ch);
+                if (ch == '\'')
+                {
+                    buffer.pop_back();
+                    fin.get(ch);
+                    source.push_back(Token("\'\'\'", "String", line));
+                    buffer.clear();
+                    continue;
+                }
+                else if (ch == 'n')
+                {
+                    buffer.pop_back();
+                    fin.get(ch);
+                    source.push_back(Token("\'\n\'", "String", line));
+                    buffer.clear();
+                    continue;
+                }
+                else if (ch == '\\')
+                {
+                    buffer.pop_back();
+                    fin.get(ch);
+                    source.push_back(Token("\'\\\'", "String", line));
+                    buffer.clear();
+                    continue;
+                }
+            }
+            else
+            {
+                buffer.push_back(ch);
+                fin.get(ch);
+                buffer.push_back(ch);
+                source.push_back(Token(buffer, "String", line));
+                buffer.clear();
+                continue;
+            }
+
+        }
+        //comment identification
+        else if (ch == '/')
+        {
+            buffer.push_back(ch);
+            fin.get(ch);
+            if (ch == '*')
+            {
+                int t_line = line;
+                buffer.push_back(ch);
+                bool t_flag = true;
+                while (t_flag)
+                {
+                    fin.get(ch);
+                    if (ch == '*')
+                    {
+                        buffer.push_back(ch);
+                        fin.get(ch);
+                        if (ch == '/')
+                        {
+                            buffer.push_back(ch);
+                            t_flag = false;
+                        }
+                        else
+                        {
+                            buffer.push_back(ch);
+                        }
+                    }
+                    else if (ch == '\n')
+                    {
+                        buffer.push_back(ch);
+                        line += 1;
+                    }
+                    else
+                    {
+                        buffer.push_back(ch);
+                    }
+                }
+                source.push_back(Token(buffer, "Comment", t_line));
+                buffer.clear();
+                continue;
+            }
+            else if (ch == '/')
+            {
+                buffer.push_back(ch);
+                bool t_flag = true;
+                while (t_flag)
+                {
+                    fin.get(ch);
+                    if (ch == '\n')
+                    {
+
+                        line += 1;
+                        t_flag = false;
+                    }
+                    else
+                    {
+                        buffer.push_back(ch);
+                    }
+                }
+                source.push_back(Token(buffer, "Comment", line - 1));
+                buffer.clear();
+                continue;
+            }
+            else
+            {
+                int pos = fin.tellg();
+                fin.seekg(pos - 1);
+                buffer.clear();
+                continue;
+            }
+        }
+        //String identification
+        else if (ch == '\"')
+        {
+            buffer.push_back(ch);
+            fin.get(ch);
+            while (ch != '\"')
             {
                 buffer.push_back(ch);
                 fin.get(ch);
@@ -212,68 +369,66 @@ int main()
             buffer.clear();
             continue;
         }
-        if (flag == true)
+        else if (IsOperator(ch) == true)
         {
+            source.push_back(Token(ch, "Operator", line));
             continue;
         }
-        if (IsOperator(ch) == true)
-        {              
-            if (ch == '+')
+        //Constant identification
+        /*else if (isalnum(ch))
+        {
+            while (true)
             {
                 buffer.push_back(ch);
                 fin.get(ch);
-                if (ch == '+')
+                if (ch == ' ')
                 {
-                    buffer.push_back(ch);
-                    source.push_back(Token(buffer, "Operator",line));
-                    buffer.clear(); 
-                    flag = true;
-                }
-                else if (ch == '=')
-                {
-                    buffer.push_back(ch);
-                    source.push_back(Token(buffer, "Operator", line));
+                    source.push_back(Token(buffer, "Constant", line));
                     buffer.clear();
                     flag = true;
+                    break;
                 }
-                else if (ch == ' ')
+                else if(ch == '\n')
                 {
-                    source.push_back(Token(buffer, "Operator", line));
+                    source.push_back(Token(buffer, "Constant", line));
                     buffer.clear();
                     flag = true;
+                    break;
+                }
+                else if (isalpha(ch))
+                {
+                    source.push_back(Token(buffer, "Constant", line));
+                    buffer.clear();
+                    buffer.push_back(ch);
+                    break;
                 }
                 else if (IsOperator(ch))
                 {
-                    source.push_back(Token(buffer, "Operator", line));
-                    buffer.pop_back();
-                    buffer.push_back(ch);
-                    source.push_back(Token(buffer, "Operator", line));
-                    buffer.clear();
-                    flag = true;
-                }
-                else
-                {
-                    source.push_back(Token(buffer, "Operator", line));
-                    buffer.pop_back();
-                    buffer.push_back(ch);
+                    if (ch == '.')
+                    {
+
+                    }
+                    else
+                    {
+                        source.push_back(Token(buffer, "Constant", line));
+                        source.push_back(Token(ch, "Operator", line));
+                        buffer.clear();
+                        flag = true;
+                        break;
+                    }
                 }
             }
-            else
-            {
-                source.push_back(Token(ch, "Operator", line));
-                flag = true;
-            }
-           
         }
         if (flag == true)
         {
             continue;
-        }
-        while(!flag)
+        }*/
+        //Keyword identification
+        while (!flag)
         {
             buffer.push_back(ch);
             if (fin.eof())
-            {   
+            {
                 buffer.pop_back();
                 source.push_back(Token(buffer, "Identifier", line));
                 flag = true;
@@ -281,44 +436,47 @@ int main()
             }
             if (ch == '\n')
             {
-            line += 1;
-            buffer.pop_back();
-            break;
+                line += 1;
+                buffer.pop_back();
+                break;
             }
             else if (ch == ' ')
             {
-            break;
+                break;
             }
             else if (IsOperator(ch))
             {
-                source.push_back(Token(buffer.substr(0,buffer.size()-1) ,"Identifier",line));
-                source.push_back(Token(buffer.back(), "Operator",line));
+                buffer.pop_back();
+                source.push_back(Token(buffer, "Identifier", line));
+                source.push_back(Token(ch, "Operator", line));
                 buffer.clear();
                 flag = true;
                 break;
             }
             else if (IsKeyword(buffer) == true)
             {
-                source.push_back(Token(buffer,"Keyword",line));
+                source.push_back(Token(buffer, "Keyword", line));
                 buffer.clear();
                 flag = true;
                 break;
             }
             fin.get(ch);
         }
+        //UnIdentified string saved as identifier
         if (flag == false)
-        {        
-            source.push_back(Token(buffer, "Identifier",line));
+        {
+
+            source.push_back(Token(buffer, "Identifier", line - 1));
             buffer.clear();
+
         }
     }
     fin.close();
-    for (int i = 0; i < source.size(); i++)
+    //source.pop_back();
+    for (unsigned int i = 0; i < source.size(); i++)
     {
         source[i].Log();
     }
     std::cin.get();
     return 0;
 }
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               

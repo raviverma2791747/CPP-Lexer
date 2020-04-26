@@ -1,2 +1,9 @@
-//comment
-ll
+/* adsggadaggdsghsd 
+
+*/
+//
+/**/
+a =10;
+/
+
+

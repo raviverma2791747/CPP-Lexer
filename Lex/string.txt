@@ -1,1 +1,6 @@
 "hello\ sgabsadad return dsaghdsabvdasdds"
+''
+'a'
+'\''
+'\n'
+'\\'
