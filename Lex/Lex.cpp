@@ -80,7 +80,10 @@ bool Token::operator==(char str)
 
 void Token::Log()
 {
-    std::cout << m_line << " " << m_type << " : " << m_token << std::endl;
+    std::cout.width(4);
+    std::cout <<std::left<< m_line << " | "; 
+    std::cout.width(10); 
+    std::cout << std::left << m_type << " | " << m_token << std::endl;
 }
 
 void Token::Push_back(char ch)
@@ -168,7 +171,7 @@ int main()
 {
     /*First Pass*/
     std::ifstream fin;
-    fin.open("kwd.txt", std::ios::in);
+    fin.open("string.txt", std::ios::in);
     if (!fin)
     {
         std::cout << "No such file exists" << std::endl;
@@ -178,7 +181,7 @@ int main()
     char ch;
     bool flag = false;
     int line = 1;
-    while (!fin.eof())
+    while (fin)
     {
         flag = false;
         fin.get(ch);
@@ -195,14 +198,72 @@ int main()
         {
             continue;
         }
+       if (ch == '\"')
+        {
+            buffer.push_back(ch);
+            fin.get(ch);
+            while (ch != '\"')
+            {
+                buffer.push_back(ch);
+                fin.get(ch);
+            }
+            buffer.push_back(ch);
+            source.push_back(Token(buffer, "String", line));
+            buffer.clear();
+            continue;
+        }
         if (flag == true)
         {
             continue;
         }
         if (IsOperator(ch) == true)
-        {          
-                source.push_back(Token(ch, "Operator",line));
-                flag = true;    
+        {              
+            if (ch == '+')
+            {
+                buffer.push_back(ch);
+                fin.get(ch);
+                if (ch == '+')
+                {
+                    buffer.push_back(ch);
+                    source.push_back(Token(buffer, "Operator",line));
+                    buffer.clear(); 
+                    flag = true;
+                }
+                else if (ch == '=')
+                {
+                    buffer.push_back(ch);
+                    source.push_back(Token(buffer, "Operator", line));
+                    buffer.clear();
+                    flag = true;
+                }
+                else if (ch == ' ')
+                {
+                    source.push_back(Token(buffer, "Operator", line));
+                    buffer.clear();
+                    flag = true;
+                }
+                else if (IsOperator(ch))
+                {
+                    source.push_back(Token(buffer, "Operator", line));
+                    buffer.pop_back();
+                    buffer.push_back(ch);
+                    source.push_back(Token(buffer, "Operator", line));
+                    buffer.clear();
+                    flag = true;
+                }
+                else
+                {
+                    source.push_back(Token(buffer, "Operator", line));
+                    buffer.pop_back();
+                    buffer.push_back(ch);
+                }
+            }
+            else
+            {
+                source.push_back(Token(ch, "Operator", line));
+                flag = true;
+            }
+           
         }
         if (flag == true)
         {
@@ -211,9 +272,11 @@ int main()
         while(!flag)
         {
             buffer.push_back(ch);
-            if (ch == fin.eof())
-            {
-
+            if (fin.eof())
+            {   
+                buffer.pop_back();
+                source.push_back(Token(buffer, "Identifier", line));
+                flag = true;
                 break;
             }
             if (ch == '\n')
@@ -250,319 +313,11 @@ int main()
         }
     }
     fin.close();
-    std::cout << "Pass 1 complete" << std::endl;
-     ch = 'n';
-    std::cout << "::";
-    std::cin >> ch;
-    if (ch == 'y')
-    {
-        for (int i = 0; i < source.size(); i++)
-        {
-            source[i].Log();
-        }
-    }
-    /*Second Pass*/
-    std::vector<Token> source2;
     for (int i = 0; i < source.size(); i++)
     {
-        if (IsOperator(source[i]))
-        {
-            if (source[i] == "+")
-            {
-                if (source[i + 1] == "+")
-                {
-                    source[i].Push_back('+');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else if (source[i+1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else 
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "*")
-            {
-                if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "/")
-            {
-                if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "%")
-            {
-                if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "!")
-            {
-                if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "&")
-            {
-                if (source[i + 1] == "&")
-                {
-                    source[i].Push_back('&');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "|")
-            {
-                if (source[i + 1] == "|")
-                {
-                    source[i].Push_back('|');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "^")
-            {
-            if (source[i + 1] == "=")
-            {
-                source[i].Push_back('=');
-                source2.push_back(source[i]);
-                i += 1;
-            }
-            else
-            {
-                source2.push_back(source[i]);
-            }
-            }
-            else if (source[i] == "<")
-            {
-                if (source[i + 1] == "<")
-                {
-                    if(source[i+2] == "=")
-                    {
-                        source[i].Push_back('<');
-                        source[i].Push_back('=');
-                        source2.push_back(source[i]);
-                        i += 2;
-                    }
-                    else
-                    {
-                        source[i].Push_back('<');
-                        source2.push_back(source[i]);
-                        i += 1;
-                    }
-                }
-                else if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == ">")
-            {
-                if (source[i + 1] == ">")
-                {
-                    if(source[i+2] == "=")
-                    {
-                        source[i].Push_back('>');
-                        source[i].Push_back('=');
-                        source2.push_back(source[i]);
-                        i += 2;
-                    }
-                    else
-                    {
-                        source[i].Push_back('>');
-                        source2.push_back(source[i]);
-                        i += 1;
-                    }
-                }
-                else if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "-")
-            {
-                if (source[i + 1] == "-")
-                {
-                    source[i].Push_back('-');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else if (source[i + 1] == ">")
-                {
-                    if (source[i + 2] == "*")
-                    {
-                        source[i].Push_back('>');
-                        source[i].Push_back('*');
-                        source2.push_back(source[i]);
-                        i += 2;
-                    }
-                    else
-                    {
-                        source[i].Push_back('>');
-                        source2.push_back(source[i]);
-                        i += 1;
-                    }
-                }
-               
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == "=")
-            {
-                if (source[i + 1] == "=")
-                {
-                    source[i].Push_back('=');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == ":")
-            {
-                if (source[i + 1] == ":")
-                {
-                    source[i].Push_back(':');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else if (source[i] == ".")
-            {
-                if (source[i + 1] == "*")
-                {
-                    source[i].Push_back('*');
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-            else
-            {
-                source2.push_back(source[i]);
-            }
-        }
-        else if (IsKeyword(source[i]))
-        {
-            
-           if (source[i] == "static")
-            {
-                if (source[i + 1] == "_cast")
-                {
-                    source[i].Push_back("_cast");            
-                    source2.push_back(source[i]);
-                    i += 1;
-                }
-                else
-                {
-                    source2.push_back(source[i]);
-                }
-            }
-           /*else if (!(IsKeyword(source[i + 1]) || IsOperator(source[i + 1])))
-           {
-               source[i].Push_back(source[i+1].token());
-               i += 1;
-           }
-           */
-           else
-           {
-                source2.push_back(source[i]);
-           }
-        }
-        else
-        {
-            source2.push_back(source[i]);
-        }
+        source[i].Log();
     }
-    for (int i = 0; i < source2.size(); i++)
-    {
-        source2[i].Log();
-    }
+    std::cin.get();
     return 0;
 }
 
