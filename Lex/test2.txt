@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include<fstream>
 #include<string>
@@ -40,6 +39,7 @@ public:
     void Push_back(std::string str);
     std::string token();
     void Type(std::string type);
+    std::string Type();
     
 };
 
@@ -108,6 +108,10 @@ void Token::Type(std::string type)
 {
     m_type = type;
 }
+std::string Token::Type()
+{
+    return m_type;
+}
 
 bool IsKeyword(std::string& buffer)
 {
@@ -120,17 +124,7 @@ bool IsKeyword(std::string& buffer)
     }
     return false;
 }
-bool IsKeyword(Token kwd)
-{
-    for (int i = 0; i < 61; i++)
-    {
-        if (kwd == Keywords[i])
-        {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 bool IsOperator(char ch)
 {
@@ -145,64 +139,11 @@ bool IsOperator(char ch)
     return false;
 }
 
-bool IsOperator(Token ch)
-{
-    for (int i = 0; i < 29; i++)
-    {
-        if (ch == s_operators[i])
-        {
-
-            return true;
-        }
-    }
-    return false;
-}
-
-bool IsAlnum(std::string buffer)
-{
-    for(unsigned int i=0;i<buffer.size();i++)
-    {
-        if (isalnum(buffer[i]) == false)
-        {     
-            if (buffer[i] == '.')
-            {
-
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool IsAlnum(Token tkn)
-{
-    for (unsigned int i = 0; i <tkn.token().size(); i++)
-    {
-        if (isalnum(tkn.token()[i]) == false)
-        {
-            if (tkn.token()[i] == '.')
-            {
-
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-
-
 int main()
 {
     /*First Pass*/
     std::ifstream fin;
-    fin.open("string.txt", std::ios::in);
+    fin.open("test.txt", std::ios::in);
     if (!fin)
     {
         std::cout << "No such file exists" << std::endl;
@@ -350,6 +291,7 @@ int main()
             {
                 int pos = fin.tellg();
                 fin.seekg(pos - 1);
+                source.push_back(Token(buffer, "Operator", line ));
                 buffer.clear();
                 continue;
             }
@@ -375,54 +317,21 @@ int main()
             continue;
         }
         //Constant identification
-        /*else if (isalnum(ch))
+        else if (isdigit(ch))
         {
-            while (true)
+            buffer.push_back(ch);
+            fin.get(ch);
+            while (isdigit(ch) || ch == '.')
             {
                 buffer.push_back(ch);
                 fin.get(ch);
-                if (ch == ' ')
-                {
-                    source.push_back(Token(buffer, "Constant", line));
-                    buffer.clear();
-                    flag = true;
-                    break;
-                }
-                else if(ch == '\n')
-                {
-                    source.push_back(Token(buffer, "Constant", line));
-                    buffer.clear();
-                    flag = true;
-                    break;
-                }
-                else if (isalpha(ch))
-                {
-                    source.push_back(Token(buffer, "Constant", line));
-                    buffer.clear();
-                    buffer.push_back(ch);
-                    break;
-                }
-                else if (IsOperator(ch))
-                {
-                    if (ch == '.')
-                    {
-
-                    }
-                    else
-                    {
-                        source.push_back(Token(buffer, "Constant", line));
-                        source.push_back(Token(ch, "Operator", line));
-                        buffer.clear();
-                        flag = true;
-                        break;
-                    }
-                }
             }
-        }
-        if (flag == true)
-        {
+            int pos = fin.tellg();
+            fin.seekg(pos - 1);
+            source.push_back(Token(buffer, "Constant", line));
+            buffer.clear();
             continue;
-        }*/
+        }   
         //Keyword identification
         while (!flag)
         {
@@ -477,6 +386,18 @@ int main()
     {
         source[i].Log();
     }
+    std::ofstream fout;
+    fout.open("a.txt", std::ios::out);
+    for (unsigned int i = 0; i < source.size(); i++)
+    {
+        if (source[i].Type() == "Comment")
+        {
+            continue;
+        }
+     
+        fout << source[i].token() <<std::endl;
+    }
+    fout.close();
     std::cin.get();
     return 0;
 }

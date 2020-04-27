@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include<fstream>
 #include<string>
@@ -20,7 +19,6 @@ std::string Keywords[] = { "asm","auto","bool","break","case",
 "volatile","wchar_t","while" };
 char constants[] = "0123456789";
 
-
 class Token
 {
 private:
@@ -41,19 +39,16 @@ public:
     std::string token();
     void Type(std::string type);
     std::string Type();
-    
 };
 
 Token::Token(std::string token, std::string type, int line) :
     m_token(token), m_type(type), m_line(line)
 {
-
 }
 
 Token::Token(char token, std::string type, int line) :
     m_token(1, token), m_type(type), m_line(line)
 {
-
 }
 
 Token::~Token()
@@ -100,6 +95,7 @@ void Token::Push_back(std::string str)
         m_token.push_back(str[i]);
     }
 }
+
 std::string Token::token()
 {
     return m_token;
@@ -109,6 +105,7 @@ void Token::Type(std::string type)
 {
     m_type = type;
 }
+
 std::string Token::Type()
 {
     return m_type;
@@ -125,89 +122,25 @@ bool IsKeyword(std::string& buffer)
     }
     return false;
 }
-bool IsKeyword(Token kwd)
-{
-    for (int i = 0; i < 61; i++)
-    {
-        if (kwd == Keywords[i])
-        {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 bool IsOperator(char ch)
 {
     for (int i = 0; i < 29; i++)
     {
         if (ch == operators[i])
-        {
-           
+        {       
             return true;
         }
     }
     return false;
 }
-
-bool IsOperator(Token ch)
-{
-    for (int i = 0; i < 29; i++)
-    {
-        if (ch == s_operators[i])
-        {
-
-            return true;
-        }
-    }
-    return false;
-}
-
-bool IsAlnum(std::string buffer)
-{
-    for(unsigned int i=0;i<buffer.size();i++)
-    {
-        if (isalnum(buffer[i]) == false)
-        {     
-            if (buffer[i] == '.')
-            {
-
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool IsAlnum(Token tkn)
-{
-    for (unsigned int i = 0; i <tkn.token().size(); i++)
-    {
-        if (isalnum(tkn.token()[i]) == false)
-        {
-            if (tkn.token()[i] == '.')
-            {
-
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-
 
 int main()
 {
     /*First Pass*/
     std::ifstream fin;
-    fin.open("constants.txt", std::ios::in);
+    fin.open("test2.txt", std::ios::in);
     if (!fin)
     {
         std::cout << "No such file exists" << std::endl;
@@ -338,7 +271,6 @@ int main()
                     fin.get(ch);
                     if (ch == '\n')
                     {
-
                         line += 1;
                         t_flag = false;
                     }
@@ -381,17 +313,21 @@ int main()
             continue;
         }
         //Constant identification
-        else if (isalnum(ch))
+        else if (isdigit(ch))
         {
-           
-           continue;
-        }
-      
-        if (flag == true)
-        {
+            buffer.push_back(ch);
+            fin.get(ch);
+            while (isdigit(ch) || ch == '.')
+            {
+                buffer.push_back(ch);
+                fin.get(ch);
+            }
+            int pos = fin.tellg();
+            fin.seekg(pos - 1);
+            source.push_back(Token(buffer, "Constant", line));
+            buffer.clear();
             continue;
-        }
-       
+        }   
         //Keyword identification
         while (!flag)
         {
@@ -434,10 +370,8 @@ int main()
         //UnIdentified string saved as identifier
         if (flag == false)
         {
-
             source.push_back(Token(buffer, "Identifier", line - 1));
             buffer.clear();
-
         }
     }
     fin.close();
@@ -453,8 +387,7 @@ int main()
         if (source[i].Type() == "Comment")
         {
             continue;
-        }
-     
+        }  
         fout << source[i].token() <<std::endl;
     }
     fout.close();
